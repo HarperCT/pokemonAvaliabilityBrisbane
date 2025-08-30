@@ -1,8 +1,6 @@
 import logging
 import requests
 import json
-import time
-from tabulate import tabulate
 
 # Configure logging
 logging.basicConfig(
@@ -11,34 +9,29 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# ANSI colors
-GREEN = "\033[92m"
-RED = "\033[91m"
-RESET = "\033[0m"
-
-def color_stock_level(level: str) -> str:
-    """
-    Returns a color-coded string based on stock level:
-    - 'High' or 'Medium' => Green
-    - everything else => Red
-    """
-    if level in ["High", "Medium"]:
-        return f"{GREEN}{level}{RESET}"
-    else:
-        return f"{RED}{level}{RESET}"
-
 # Keycodes with associated product names
 KEYCODE_PRODUCTS = {
-    "43556663": "Elite Trainer Box",
-    "43556656": "Sticker Collection",
-    "43556649": "Binder Collection",
-    "43556632": "Poster Collection",
-    "43556670": "Mini Tin"
+    "Pokemon Trading Card Game: Scarlet & Violet Prismatic Evolutions Elite Trainer Box": "43556663",
+    "Pokemon Trading Card Game: Scarlet and Violet 151 Zapdos Ex Collection": "43350230",
+    "Pokemon Trading Card Game: Scarlet & Violet Prismatic Evolutions Booster Bundle": "43556700",
+    "Pokemon Trading Card Game: Scarlet and Violet White Flare Booster Bundle": "43615735",
+    "Pokemon Trading Card Game: Scarlet and Violet Black Bolt Booster Bundle": "43615742",
+    "Pokemon Trading Card Game Holiday Calendar": "43647248",
+    "Pokemon Trading Card Game: Scarlet & Violet Surging Sparks Booster Bundle": "43519750",
+    "Pokemon Trading Card Game: Scarlet and Violet Black Bolt and White Flare Victini Illustration Collection": "43615728",
+    "Pokemon Trading Card Game: Scarlet and Violet 151 Booster Bundle": "43350070",
+    "Pokemon Trading Card Game: Scarlet & Violet Destined Rivals Elite Trainer Box": "43601219",
+    "Pokemon Trading Card Game: Unova Mini Tin - Assorted": "43615667",
+    "Pokemon Trading Card Game: Scarlet & Violet 151 Alakazam Ex Collection": "43350223",
+    "Pokemon Trading Card Game: Scarlet and Violet White Flare Elite Trainer Box": "43615643",
+    "Pokemon Trading Card Game: Slashing Legends Tin - Assorted": "43612154",
+    "Pokemon Trading Card Game: Scarlet & Violet Destined Rivals Blister Pack - Assorted": "43601165",
+    "Pokemon Trading Card Game: Charizard ex Super-Premium Collection": "43510948",
+    "Pokemon Trading Card Game: Scarlet & Violet Prismatic Evolutions Surprise Box - Assorted": "43556687",
+    "Pokemon Trading Card Game: Scarlet & Violet Surging Sparks Elite Trainer Box": "43519804",
 }
 
 URL = "https://api.kmart.com.au/gateway/graphql"
-
-LOCAL_POST_CODE = "4000"  # Change this
 
 HEADERS = {
     "accept": "*/*",
@@ -55,7 +48,7 @@ HEADERS = {
     "Referrer-Policy": "strict-origin-when-cross-origin"
 }
 
-def fetch_inventory_for_keycode(keycode: str) -> list:
+def fetch_inventory_for_keycode(keycode: str, postcode: str) -> list:
     """
     Fetch inventory data for a single keycode.
     Returns a list of (locationName, locationId, stockLevel).
@@ -64,7 +57,7 @@ def fetch_inventory_for_keycode(keycode: str) -> list:
         "operationName": "getFindInStore",
         "variables": {
             "input": {
-                "postcode": LOCAL_POST_CODE,
+                "postcode": postcode,
                 "country": "AU",
                 "keycodes": [keycode]
             }
@@ -109,42 +102,20 @@ def fetch_inventory_for_keycode(keycode: str) -> list:
 
     return results
 
-def main():
-    polling_interval = 300  # 5 minutes = 300 seconds
-    logger.info("Starting to poll stock levels every 5 minutes...")
+def main(postcode: str):
 
-    while True:
-        # 1. Fetch data for ALL keycodes first
-        all_results = {}
-        for keycode, product_name in KEYCODE_PRODUCTS.items():
-            stores = fetch_inventory_for_keycode(keycode)
-            all_results[keycode] = stores
-
-        # 2. After all requests, print them in a table for each keycode
-        for keycode, product_name in KEYCODE_PRODUCTS.items():
-            # Prepare table data: a list of rows
-            # We'll color the stock level
-            table_data = []
-            for (loc_name, loc_id, stock_level) in all_results[keycode]:
-                colored_stock = color_stock_level(stock_level)
-                table_data.append([loc_name, loc_id, colored_stock])
-
-            # Generate a table string using tabulate
-            table_str = tabulate(
-                table_data,
-                headers=["Store", "Location ID", "Stock Level"],
-                tablefmt="psql"
-            )
-
-            # Print a header line with keycode and product name
-            logger.info("Keycode: %s - %s", keycode, product_name)
-
-            # Each line of the table gets logged so timestamps/levels appear
-            for line in table_str.split("\n"):
-                logger.info(line)
-
-        logger.info("Finished this polling cycle. Sleeping for 5 minutes...\n")
-        time.sleep(polling_interval)
+    all_results = {}
+    nice_json = {}
+    for product_name, keycode in KEYCODE_PRODUCTS.items():
+        stores = fetch_inventory_for_keycode(keycode, postcode)
+        all_results[product_name] = stores
+        nice_json[product_name] = {}
+        for (loc_name, _loc_id, stock_level) in all_results[product_name]:
+            nice_json[product_name][loc_name] = stock_level
+    return nice_json
 
 if __name__ == "__main__":
-    main()
+    x = main("4000")
+    logger.info(x)
+    y = main("4207")
+    logger.info(y)

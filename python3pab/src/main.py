@@ -1,6 +1,6 @@
 import APIs.bigw_api
+import APIs.kmart_api
 from colorama import Fore, Style, init
-import json
 
 # Initialize colorama
 init(autoreset=True)
@@ -8,10 +8,15 @@ outputs = {}
 def main():
     big_w_output = APIs.bigw_api.main()
     outputs["Big W"] = big_w_output
+    kmart_output = APIs.kmart_api.main("4000")
+    outputs["Kmart"] = kmart_output
 
     # Function to print stock status with color
     def print_colored_stock(stock_data):
         color_mapping = {
+            "Low": Fore.RED,
+            "Medium": Fore.YELLOW,
+            "High": Fore.GREEN,
             "outOfStock": Fore.RED,
             "inStock": Fore.GREEN,
             "lowStock": Fore.YELLOW

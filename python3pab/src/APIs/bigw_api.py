@@ -49,7 +49,7 @@ def main():
         'Accept-Encoding': 'gzip, deflate, br',
         'Connection': 'keep-alive',
         'Upgrade-Insecure-Requests': '1',
-        'X-BIGW-ZoneId': 'BRISBANE-CITY-4000'  # Example zone for Sydney CBD (postcode 2000
+        'X-BIGW-ZoneId': 'BRISBANE-CITY-4000'
     }
 
     http = urllib3.PoolManager(headers=headers)
