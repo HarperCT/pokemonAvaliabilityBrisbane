@@ -85,6 +85,9 @@ def main():
                 nice_json[key][key2] = value2
             else:
                 nice_json[key][key2] = value2["status"]
-    print(nice_json)
 
-main()
+    return nice_json
+
+if __name__ == "__main__":
+    _return = main()
+    print(_return)
