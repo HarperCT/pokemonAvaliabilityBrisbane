@@ -13,7 +13,8 @@ PRODUCTS = {
     "Pokemon TCG: Scarlet & Violet Twilight Masquerade Booster Bundle": 906105,
     "Pokémon TCG: Scarlet & Violet - Twilight Masquerade Booster Display (36 Booster Packs)": 906107,
     "Pokémon TCG: Mew VMAX League Battle Deck": 250448,
-    "Pokémon TCG: Holiday Calendar": 6038508
+    "Pokémon TCG: Holiday Calendar": 6038508,
+    # "Pokémon TCG: Mega Evolution Blister - Assorted*": 6038711  #TODO make the pre-order things work...
 }
 
 STORE_IDS = {
@@ -48,11 +49,13 @@ def main():
         'Accept-Encoding': 'gzip, deflate, br',
         'Connection': 'keep-alive',
         'Upgrade-Insecure-Requests': '1',
-        'X-BIGW-ZoneId': 'BRISBANE-CITY-4000'
+        'X-BIGW-ZoneId': 'BRISBANE-CITY-4000'  # Example zone for Sydney CBD (postcode 2000
     }
 
     http = urllib3.PoolManager(headers=headers)
-    _response = http.request('GET', base_bigw_url)
+    response = http.request('GET', base_bigw_url)
+    set_cookie_header = response.headers.get('Set-Cookie')
+    headers["set-cookie"] = set_cookie_header
     all_stores_url = "?"
     for storeid in STORE_IDS.values():
         all_stores_url += f"storeId={storeid}&"
