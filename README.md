@@ -1,4 +1,4 @@
-# Pokemon Cards Availability Checker
+# Pokemon Cards Availability Checker (Currently hardcoded for Brisbane region)
 
 ## Overview
 
