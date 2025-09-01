@@ -24,15 +24,15 @@
     document.getElementById("fetchBtn").addEventListener("click", async () => {
         const output = document.getElementById("output");
         try {
-        const response = await fetch('https://pokemonavailabilitybrisbane.onrender.com/api/data');
+            const response = await fetch('https://pokemonavailabilitybrisbane.onrender.com/api/data');
 
-        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
 
-        const data = await response.json();
-        output.textContent = JSON.stringify(data, null, 2);
+            const data = await response.json();
+            output.textContent = JSON.stringify(data, null, 2);
         } catch (err) {
-        console.error(err);
-        output.textContent = "Error fetching data: " + err.message;
+            console.error(err);
+            output.textContent = "Error fetching data: " + err.message;
         }
     });
     </script>
