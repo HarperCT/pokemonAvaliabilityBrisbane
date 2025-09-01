@@ -1,4 +1,3 @@
-from bs4 import BeautifulSoup
 import requests
 from colorama import Fore, Style
 
@@ -54,5 +53,6 @@ def print_colored_stock(stock_data):
         print(f"  {product}: {color}{status}{Style.RESET_ALL}")
 
 if __name__ == "__main__":
+    from bs4 import BeautifulSoup
     x = main()
     print_colored_stock(x)

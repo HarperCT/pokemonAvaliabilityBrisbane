@@ -23,7 +23,7 @@
 
   <script>
     async function fetchData() {
-      const response = await fetch('https://my-python-api.onrender.com/api/data');
+      const response = await fetch('https://pokemonavaliabilitybrisbane.onrender.com/api/data');
       const data = await response.json();
       document.getElementById('output').textContent = JSON.stringify(data, null, 2);
     }

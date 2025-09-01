@@ -3,4 +3,4 @@ flask-cors
 colorama
 urllib3
 requests
-beautifulsoup4 
+beautifulsoup4
