@@ -53,7 +53,11 @@ def main():
     }
 
     http = urllib3.PoolManager(headers=headers)
-    response = http.request('GET', base_bigw_url, timeout=20.0)
+    try:
+        response = http.request('GET', base_bigw_url, timeout=20.0)
+    except Exception:
+        logger.error("Big W sucks, move on to next API")
+        return {}
     set_cookie_header = response.headers.get('Set-Cookie')
     headers["set-cookie"] = set_cookie_header
     all_stores_url = "?"
@@ -65,12 +69,19 @@ def main():
 
     for key, value in PRODUCTS.items():
         final_stock_api = stock_api + str(value) + all_stores_url
+        logger.info("hitting the product")
+        try:
+            stock_response = http.request(
+                'GET',
+                final_stock_api,
+                headers=headers,
+                timeout=20.0
+            )
+        except Exception:
+            logger.error("probably failed just this one... lets skip it...")
+            continue
+
         nice_json[key] = {}
-        stock_response = http.request(
-            'GET',
-            final_stock_api,
-            headers=headers
-        )
 
         response_json = json.loads(stock_response.data.decode())
 

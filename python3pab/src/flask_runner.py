@@ -9,6 +9,7 @@ CORS(app, resources={r"/api/*": {"origins": "https://harperct.github.io"}})
 @app.route('/')
 def home_data():
     print("wow you found my home dir! Nice!!")
+    return {"message": "wow you found my home dir!"}
 
 @app.route('/api/data')
 def get_data():

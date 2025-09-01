@@ -38,6 +38,9 @@ def print_colored_stock(stock_data):
     # Loop through each product
     for product, stores in stock_data.items():
         print(f"\n{product}:")
+        if stores is None or product is None:
+            logger.warning("howd we get here...")
+            continue
         # Loop through each store and print status with color
         for store, status in stores.items():
             if isinstance(status, str):  # Simple status like 'outOfStock'
