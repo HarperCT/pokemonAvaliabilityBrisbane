@@ -2,11 +2,6 @@ import logging
 import requests
 import json
 
-# Configure logging
-logging.basicConfig(
-    level=logging.INFO,  # or logging.DEBUG if you want more verbose output
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
 logger = logging.getLogger(__name__)
 
 # Keycodes with associated product names
