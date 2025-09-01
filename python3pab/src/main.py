@@ -17,8 +17,8 @@ logger = logging.getLogger(__name__)
 init(autoreset=True)
 def fetch_data():
     outputs = {}
-    big_w_output = APIs.bigw_api.main()
-    outputs["Big W"] = big_w_output
+    # big_w_output = APIs.bigw_api.main()
+    # outputs["Big W"] = big_w_output
     kmart_output = APIs.kmart_api.main("4000")
     outputs["Kmart"] = kmart_output
     meeples_output = APIs.morethanmeeples.main()
