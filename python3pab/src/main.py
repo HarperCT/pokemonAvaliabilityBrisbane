@@ -1,5 +1,7 @@
 import APIs.bigw_api
 import APIs.kmart_api
+import APIs.morethanmeeples
+
 from colorama import Fore, Style, init
 
 # Initialize colorama
@@ -10,18 +12,18 @@ def main():
     outputs["Big W"] = big_w_output
     kmart_output = APIs.kmart_api.main("4000")
     outputs["Kmart"] = kmart_output
-
+    meeples_output = APIs.morethanmeeples.main()
+    outputs["MoreThanMeeples"] = meeples_output
     # Function to print stock status with color
     def print_colored_stock(stock_data):
         color_mapping = {
             "Low": Fore.RED,
-            "Medium": Fore.YELLOW,
-            "High": Fore.GREEN,
             "outOfStock": Fore.RED,
+            "Medium": Fore.YELLOW,
+            "lowStock": Fore.YELLOW,
+            "High": Fore.GREEN,
             "inStock": Fore.GREEN,
-            "lowStock": Fore.YELLOW
         }
-
         # Loop through each product
         for product, stores in stock_data.items():
             print(f"\n{product}:")
@@ -35,7 +37,11 @@ def main():
     # Print the stock data with colored status for all stores!
     for website, output in outputs.items():
         print(website)
-        print_colored_stock(output)
+        if website == "MoreThanMeeples":  # one shot stores...
+            APIs.morethanmeeples.print_colored_stock(output)
+        else:
+            print_colored_stock(output)
+
 
 
 if __name__ == "__main__":
