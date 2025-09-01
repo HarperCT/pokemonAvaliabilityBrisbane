@@ -1,2 +1,6 @@
 flask
 flask-cors
+colorama
+urllib3
+requests
+beautifulsoup4 
