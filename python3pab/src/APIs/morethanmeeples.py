@@ -1,4 +1,4 @@
-import requests
+import cloudscraper
 from colorama import Fore, Style
 from bs4 import BeautifulSoup
 import logging
@@ -14,10 +14,9 @@ headers = {
 }
 def main():
     logger.info("Starting Meeples API")
-    response = requests.get(url, headers=headers)
-
+    scraper = cloudscraper.create_scraper()  # Bypasses Cloudflare JS challenge
+    response = scraper.get(url, headers=headers)
     html = response.text
-
     # Parse with BeautifulSoup
     soup = BeautifulSoup(html, "html.parser")
 
