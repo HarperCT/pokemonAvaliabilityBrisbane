@@ -1,5 +1,6 @@
 import requests
 from colorama import Fore, Style
+from bs4 import BeautifulSoup
 
 url = "https://morethanmeeples.com.au/buy-pokemon-cards-online/"
 
@@ -53,6 +54,5 @@ def print_colored_stock(stock_data):
         print(f"  {product}: {color}{status}{Style.RESET_ALL}")
 
 if __name__ == "__main__":
-    from bs4 import BeautifulSoup
     x = main()
     print_colored_stock(x)
