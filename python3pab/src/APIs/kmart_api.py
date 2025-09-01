@@ -66,16 +66,17 @@ def fetch_inventory_for_keycode(keycode: str, postcode: str) -> list:
         }"""
     }
 
-    logger.info("Fetching inventory for keycode %s with payload:\n%s",
+    logger.debug("Fetching inventory for keycode %s with payload:\n%s",
                  keycode, json.dumps(payload, indent=2))
 
-    response = requests.post(URL, headers=HEADERS, json=payload)
+    response = requests.post(URL, headers=HEADERS, json=payload, timeout=20.0)
     response.raise_for_status()
     data = response.json()
 
     # Navigate into the structure
-    find_in_store = data.get("data", {}).get("findInStoreQuery", [])
-    if not find_in_store:
+    try:
+        find_in_store = data.get("data", {}).get("findInStoreQuery", [])
+    except Exception:
         logger.warning("No data returned for keycode %s", keycode)
         return []
 
@@ -101,6 +102,7 @@ def main(postcode: str):
         nice_json[product_name] = {}
         for (loc_name, _loc_id, stock_level) in all_results[product_name]:
             nice_json[product_name][loc_name] = stock_level
+    logger.info("Finished Kmart API")
     return nice_json
 
 if __name__ == "__main__":

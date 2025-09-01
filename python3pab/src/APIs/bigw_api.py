@@ -49,12 +49,11 @@ def main():
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/115.0',
         'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
         'Accept-Language': 'en-US,en;q=0.5',
-        'Accept-Encoding': 'gzip, deflate, br',
         'X-BIGW-ZoneId': 'BRISBANE-CITY-4000'
     }
 
     http = urllib3.PoolManager(headers=headers)
-    response = http.request('GET', base_bigw_url)
+    response = http.request('GET', base_bigw_url, timeout=20.0)
     set_cookie_header = response.headers.get('Set-Cookie')
     headers["set-cookie"] = set_cookie_header
     all_stores_url = "?"
