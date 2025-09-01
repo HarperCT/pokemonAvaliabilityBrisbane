@@ -4,7 +4,7 @@ from flask_cors import CORS
 import main
 
 app = Flask(__name__)
-CORS(app)  # Allow cross-origin requests (e.g. from GitHub Pages)
+CORS(app, resources={r"/api/*": {"origins": "https://harperct.github.io"}})
 
 @app.route('/api/data')
 def get_data():
