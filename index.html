@@ -17,16 +17,24 @@
   </style>
 </head>
 <body>
-  <h1>Python Output (from API)</h1>
-  <button onclick="fetchData()">Fetch Data</button>
-  <pre id="output">Click the button to load data...</pre>
+    <h1>Python Output (from API)</h1>
+    <button onclick="fetchData()">Fetch Data</button>
+    <pre id="output">Click the button to load data...</pre>
+    <script>
+    document.getElementById("fetchBtn").addEventListener("click", async () => {
+        const output = document.getElementById("output");
+        try {
+        const response = await fetch('https://pokemonavailabilitybrisbane.onrender.com/api/data');
 
-  <script>
-    async function fetchData() {
-      const response = await fetch('https://pokemonavaliabilitybrisbane.onrender.com/api/data');
-      const data = await response.json();
-      document.getElementById('output').textContent = JSON.stringify(data, null, 2);
-    }
-  </script>
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+
+        const data = await response.json();
+        output.textContent = JSON.stringify(data, null, 2);
+        } catch (err) {
+        console.error(err);
+        output.textContent = "Error fetching data: " + err.message;
+        }
+    });
+    </script>
 </body>
 </html>

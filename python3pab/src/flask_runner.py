@@ -8,8 +8,12 @@ CORS(app)  # Allow cross-origin requests (e.g. from GitHub Pages)
 
 @app.route('/api/data')
 def get_data():
-    # Replace this with your actual Python logic
-    result = main.fetch_data()
+    print("API was hit!")
+    try:
+        result = main.fetch_data()
+    except Exception:
+        print("Failed fetching")
+    print(f"got result {result}")
     return jsonify(result)
 
 if __name__ == '__main__':

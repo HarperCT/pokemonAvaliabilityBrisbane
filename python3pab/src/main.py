@@ -49,7 +49,6 @@ def print_colored_stock(stock_data):
 
 if __name__ == "__main__":
     data = fetch_data()
-        # Print the stock data with colored status for all stores!
     for website, output in data.items():
         print(website)
         if website == "MoreThanMeeples":  # one shot stores...
