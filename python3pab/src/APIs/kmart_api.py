@@ -66,7 +66,7 @@ def fetch_inventory_for_keycode(keycode: str, postcode: str) -> list:
         }"""
     }
 
-    logger.debug("Fetching inventory for keycode %s with payload:\n%s",
+    logger.info("Fetching inventory for keycode %s with payload:\n%s",
                  keycode, json.dumps(payload, indent=2))
 
     response = requests.post(URL, headers=HEADERS, json=payload)
@@ -92,7 +92,7 @@ def fetch_inventory_for_keycode(keycode: str, postcode: str) -> list:
     return results
 
 def main(postcode: str):
-
+    logger.info("Starting Kmart API")
     all_results = {}
     nice_json = {}
     for product_name, keycode in KEYCODE_PRODUCTS.items():

@@ -1,8 +1,10 @@
 import urllib3
 import json
+import logging
 
 stock_api = "https://api.bigw.com.au/api/availability/v0/product/"
 base_bigw_url = "https://www.bigw.com.au/"  # For cookies
+logger = logging.getLogger(__name__)
 
 PRODUCTS = {
     "Pokemon TCG: Charizard ex Super-Premium Collection": 942021,
@@ -41,6 +43,7 @@ STORE_IDS = {
 }
 
 def main():
+    logger.info("Starting BigW API")
     nice_json = {}
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/115.0',
@@ -83,6 +86,7 @@ def main():
                 nice_json[key][key2] = value2
             else:
                 nice_json[key][key2] = value2["status"]
+    logger.info("Finished BigW API")
 
     return nice_json
 

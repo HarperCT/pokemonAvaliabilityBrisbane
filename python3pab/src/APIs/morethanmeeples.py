@@ -1,6 +1,8 @@
 import requests
 from colorama import Fore, Style
 from bs4 import BeautifulSoup
+import logging
+logger = logging.getLogger(__name__)
 
 url = "https://morethanmeeples.com.au/buy-pokemon-cards-online/"
 
@@ -13,6 +15,7 @@ headers = {
     "Connection": "keep-alive",
 }
 def main():
+    logger.info("Starting Meeples API")
     response = requests.get(url, headers=headers)
 
     html = response.text
@@ -41,6 +44,7 @@ def main():
         product_availability[slug] = stock_status
 
     # Output as pretty JSON
+    logger.info("Finished Meeples API")
     return product_availability
 
 def print_colored_stock(stock_data):
