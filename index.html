@@ -1,169 +1,206 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <meta charset="UTF-8">
-  <title>Pokemon Availability in Brisbane Region</title>
-  <style>
-    body {
-      font-family: sans-serif;
-      padding: 2rem;
-    }
-    pre {
-      background: #f4f4f4;
-      padding: 1rem;
-      border-radius: 5px;
-      white-space: pre-wrap;
-    }
-    #statusRow {
-      display: flex;
-      align-items: center;
-      gap: 1rem;
-      margin-bottom: 1rem;
-    }
-    #status {
-      font-weight: bold;
-    }
-    #status.ok { color: green; }
-    #status.error { color: red; }
-    button:disabled {
-      background: #ccc;
-      cursor: not-allowed;
-    }
-    select {
-      margin-left: 1rem;
-      padding: 0.4rem;
-    }
-    #lastFetched {
-      margin-top: 0.5rem;
-      font-size: 0.9rem;
-      color: #555;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <title>Pokemon Availability in Brisbane Region</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            padding: 2rem;
+        }
+        pre {
+            background: #f4f4f4;
+            padding: 1rem;
+            border-radius: 5px;
+            white-space: pre-wrap;
+        }
+        #statusRow {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+        }
+        #status {
+            font-weight: bold;
+        }
+        #status.ok {
+            color: green;
+        }
+        #status.error {
+            color: red;
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        select {
+            margin-left: 1rem;
+            padding: 0.4rem;
+        }
+        #lastFetched {
+            margin-top: 0.5rem;
+            font-size: 0.9rem;
+            color: #555;
+        }
+        label.inline {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.95rem;
+        }
+    </style>
 </head>
 <body>
-  <h1>Pokemon Availability in Brisbane Region</h1>
+    <h1>Pokemon Availability in Brisbane Region</h1>
 
-  <div id="statusRow">
-    <div id="status">Checking API status...</div>
-    <button id="fetchBtn" disabled>Fetch Data</button>
-  </div>
+    <div id="statusRow">
+        <div id="status">Checking API status...</div>
+        <button id="fetchBtn" disabled>Fetch Data</button>
+        <label class="inline">
+            <input type="checkbox" id="hideOutOfStock" />
+            Hide out of stock items
+        </label>
+    </div>
 
-  <div id="lastFetched">Last fetched: Never</div>
+    <div id="lastFetched">Last fetched: Never</div>
 
-  <label for="siteSelect">Filter by website:</label>
-  <select id="siteSelect" disabled>
-    <option value="">-- Select --</option>
-  </select>
-
-  <pre id="output">Click "Fetch Data" to load info...</pre>
-
-  <script>
-    const API_BASE = 'https://pokemonavaliabilitybrisbane.onrender.com';
-    const STATUS_EL = document.getElementById("status");
-    const FETCH_BTN = document.getElementById("fetchBtn");
-    const OUTPUT = document.getElementById("output");
-    const SITE_SELECT = document.getElementById("siteSelect");
-    const LAST_FETCHED = document.getElementById("lastFetched");
-
-    let fullData = null;
-
-    // Health Check
-    async function checkAPIStatus() {
-      try {
-        const res = await fetch(`${API_BASE}/`);
-        if (!res.ok) throw new Error("API offline");
-        await res.json();
-
-        STATUS_EL.textContent = "API is online.";
-        STATUS_EL.className = "ok";
-        FETCH_BTN.disabled = false;
-      } catch (err) {
-        console.warn("API is offline:", err);
-        STATUS_EL.textContent = "API is offline. Retrying in 30 seconds...";
-        STATUS_EL.className = "error";
-        FETCH_BTN.disabled = true;
-        SITE_SELECT.disabled = true;
-      }
-    }
-
-    checkAPIStatus();
-    setInterval(checkAPIStatus, 30000);
-
-    // Fetch data
-    FETCH_BTN.addEventListener("click", async () => {
-      OUTPUT.textContent = "Fetching data...";
-      try {
-        const response = await fetch(`${API_BASE}/api/data`);
-        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-        const data = await response.json();
-        fullData = data;
-
-        const now = new Date();
-        LAST_FETCHED.textContent = `Last fetched: ${now.toLocaleString()}`;
-
-        OUTPUT.textContent = "Select a website to view its data.";
-        populateSiteDropdown(data);
-      } catch (err) {
-        console.error(err);
-        OUTPUT.textContent = "Error fetching data: " + err.message;
-      }
-    });
-
-    function populateSiteDropdown(data) {
-      SITE_SELECT.innerHTML = `
+    <label for="siteSelect">Filter by website:</label>
+    <select id="siteSelect" disabled>
         <option value="">-- Select --</option>
-        <option value="__all__">-- Show All --</option>
-      `;
-      Object.keys(data).forEach(site => {
-        const option = document.createElement("option");
-        option.value = site;
-        option.textContent = site;
-        SITE_SELECT.appendChild(option);
-      });
-      SITE_SELECT.disabled = false;
-    }
+    </select>
 
-    SITE_SELECT.addEventListener("change", () => {
-      const selectedSite = SITE_SELECT.value;
-      if (!selectedSite || !fullData) {
-        OUTPUT.textContent = "Select a website to view data.";
-        return;
-      }
+    <pre id="output">Click "Fetch Data" to load info...</pre>
 
-      let display = "";
+    <script>
+        const API_BASE = 'https://pokemonavaliabilitybrisbane.onrender.com';
+        const STATUS_EL = document.getElementById("status");
+        const FETCH_BTN = document.getElementById("fetchBtn");
+        const OUTPUT = document.getElementById("output");
+        const SITE_SELECT = document.getElementById("siteSelect");
+        const LAST_FETCHED = document.getElementById("lastFetched");
+        const HIDE_OUT_OF_STOCK = document.getElementById("hideOutOfStock");
 
-      if (selectedSite === "__all__") {
-        for (const [siteName, siteData] of Object.entries(fullData)) {
-          display += "==============================\n";
-          display += `Website: ${siteName}\n`;
-          display += "==============================\n\n";
-          display += formatSiteData(siteData);
-          display += "\n\n";
+        let fullData = null;
+
+        // Configurable out-of-stock indicators
+        const outOfStockKeywords = ["Low", "Out of Stock"];
+
+        // Health check
+        async function checkAPIStatus() {
+            try {
+                const res = await fetch(`${API_BASE}/`);
+                if (!res.ok) throw new Error("API offline");
+                await res.json();
+
+                STATUS_EL.textContent = "API is online.";
+                STATUS_EL.className = "ok";
+                FETCH_BTN.disabled = false;
+            } catch (err) {
+                console.warn("API is offline:", err);
+                STATUS_EL.textContent = "API is offline. Retrying in 30 seconds...";
+                STATUS_EL.className = "error";
+                FETCH_BTN.disabled = true;
+                SITE_SELECT.disabled = true;
+            }
         }
-      } else {
-        const siteData = fullData[selectedSite];
-        display += `Showing data for: ${selectedSite}\n\n`;
-        display += formatSiteData(siteData);
-      }
 
-      OUTPUT.textContent = display;
-    });
+        checkAPIStatus();
+        setInterval(checkAPIStatus, 30000);
 
-    function formatSiteData(siteData) {
-      let output = "";
-      for (const [product, locationsOrStatus] of Object.entries(siteData)) {
-        output += `${product}\n`;
-        if (typeof locationsOrStatus === 'string') {
-          output += `    Status: ${locationsOrStatus}\n`;
-        } else {
-          for (const [location, stock] of Object.entries(locationsOrStatus)) {
-            output += `    ${location}: ${stock}\n`;
-          }
+        // Fetch data
+        FETCH_BTN.addEventListener("click", async () => {
+            OUTPUT.textContent = "Fetching data...";
+            try {
+                const response = await fetch(`${API_BASE}/api/data`);
+                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                const data = await response.json();
+                fullData = data;
+
+                const now = new Date();
+                LAST_FETCHED.textContent = `Last fetched: ${now.toLocaleString()}`;
+
+                OUTPUT.textContent = "Select a website to view its data.";
+                populateSiteDropdown(data);
+            } catch (err) {
+                console.error(err);
+                OUTPUT.textContent = "Error fetching data: " + err.message;
+            }
+        });
+
+        function populateSiteDropdown(data) {
+            SITE_SELECT.innerHTML = `
+                <option value="">-- Select --</option>
+                <option value="__all__">-- Show All --</option>
+            `;
+            Object.keys(data).forEach(site => {
+                const option = document.createElement("option");
+                option.value = site;
+                option.textContent = site;
+                SITE_SELECT.appendChild(option);
+            });
+            SITE_SELECT.disabled = false;
         }
-        output += "\n";
-      }
-      return output;
-    }
-  </script>
+
+        // Redraw when filter checkbox changes
+        HIDE_OUT_OF_STOCK.addEventListener("change", () => {
+            SITE_SELECT.dispatchEvent(new Event("change")); // Trigger re-render
+        });
+
+        SITE_SELECT.addEventListener("change", () => {
+            const selectedSite = SITE_SELECT.value;
+            if (!selectedSite || !fullData) {
+                OUTPUT.textContent = "Select a website to view data.";
+                return;
+            }
+
+            let display = "";
+
+            if (selectedSite === "__all__") {
+                for (const [siteName, siteData] of Object.entries(fullData)) {
+                    display += "==============================\n";
+                    display += `Website: ${siteName}\n`;
+                    display += "==============================\n\n";
+                    display += formatSiteData(siteData);
+                    display += "\n\n";
+                }
+            } else {
+                const siteData = fullData[selectedSite];
+                display += `Showing data for: ${selectedSite}\n\n`;
+                display += formatSiteData(siteData);
+            }
+
+            OUTPUT.textContent = display.trim() || "No items in stock based on filter.";
+        });
+
+        function formatSiteData(siteData) {
+            const hideOOS = HIDE_OUT_OF_STOCK.checked;
+            let output = "";
+
+            for (const [product, locationsOrStatus] of Object.entries(siteData)) {
+                let productDisplay = `${product}\n`;
+
+                if (typeof locationsOrStatus === 'string') {
+                    if (!hideOOS || !outOfStockKeywords.includes(locationsOrStatus)) {
+                        productDisplay += `    Status: ${locationsOrStatus}\n\n`;
+                        output += productDisplay;
+                    }
+                } else {
+                    const filteredLocations = Object.entries(locationsOrStatus)
+                        .filter(([_, stock]) => !hideOOS || !outOfStockKeywords.includes(stock));
+
+                    if (filteredLocations.length > 0) {
+                        for (const [location, stock] of filteredLocations) {
+                            productDisplay += `    ${location}: ${stock}\n`;
+                        }
+                        productDisplay += `\n`;
+                        output += productDisplay;
+                    }
+                }
+            }
+
+            return output;
+        }
+    </script>
 </body>
 </html>
