@@ -5,49 +5,127 @@
     <title>Pokemon Availability in Brisbane Region</title>
     <style>
         body {
-            font-family: sans-serif;
+            font-family: 'Segoe UI', sans-serif;
             padding: 2rem;
+            background-color: #f9f9f9;
+            color: #222;
         }
-        pre {
-            background: #f4f4f4;
-            padding: 1rem;
-            border-radius: 5px;
-            white-space: pre-wrap;
+
+        h1 {
+            font-size: 1.8rem;
+            margin-bottom: 1rem;
         }
+
         #statusRow {
             display: flex;
             align-items: center;
             gap: 1rem;
-            margin-bottom: 1rem;
+            margin-bottom: 0.5rem;
             flex-wrap: wrap;
         }
+
         #status {
             font-weight: bold;
         }
+
         #status.ok {
             color: green;
         }
+
         #status.error {
             color: red;
         }
+
+        button {
+            padding: 0.4rem 1rem;
+            border: none;
+            border-radius: 4px;
+            background-color: #007bff;
+            color: white;
+            cursor: pointer;
+            font-size: 0.95rem;
+        }
+
         button:disabled {
             background: #ccc;
             cursor: not-allowed;
         }
+
         select {
-            margin-left: 1rem;
             padding: 0.4rem;
+            margin-top: 0.5rem;
+            border-radius: 4px;
+            border: 1px solid #ccc;
         }
+
         #lastFetched {
             margin-top: 0.5rem;
             font-size: 0.9rem;
-            color: #555;
+            color: #666;
         }
+
         label.inline {
             display: flex;
             align-items: center;
             gap: 0.5rem;
             font-size: 0.95rem;
+        }
+
+        pre {
+            background: #fff;
+            padding: 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+            white-space: pre-wrap;
+            font-size: 0.95rem;
+            margin-top: 1.5rem;
+        }
+
+        .product {
+            margin-bottom: 1.5rem;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 1rem;
+        }
+
+        .product-title {
+            font-weight: bold;
+            font-size: 1.05rem;
+            margin-bottom: 0.4rem;
+        }
+
+        .location {
+            margin-left: 1rem;
+        }
+
+        .stock-High {
+            color: green;
+        }
+
+        .stock-Medium {
+            color: orange;
+        }
+
+        .stock-Low,
+        .stock-Out\ of\ Stock {
+            color: red;
+        }
+
+        .section-title {
+            font-weight: bold;
+            font-size: 1.1rem;
+            margin-top: 2rem;
+            margin-bottom: 0.5rem;
+            border-bottom: 2px solid #ddd;
+            padding-bottom: 0.3rem;
+        }
+        #output {
+            background: #fff;
+            padding: 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+            white-space: pre-wrap;
+            font-size: 0.95rem;
+            margin-top: 1.5rem;
         }
     </style>
 </head>
@@ -70,7 +148,7 @@
         <option value="">-- Select --</option>
     </select>
 
-    <pre id="output">Click "Fetch Data" to load info...</pre>
+    <div id="output">Click "Fetch Data" to load info...</div>
 
     <script>
         const API_BASE = 'https://pokemonavaliabilitybrisbane.onrender.com';
@@ -82,11 +160,8 @@
         const HIDE_OUT_OF_STOCK = document.getElementById("hideOutOfStock");
 
         let fullData = null;
-
-        // Configurable out-of-stock indicators
         const outOfStockKeywords = ["Low", "Out of Stock"];
 
-        // Health check
         async function checkAPIStatus() {
             try {
                 const res = await fetch(`${API_BASE}/`);
@@ -108,9 +183,8 @@
         checkAPIStatus();
         setInterval(checkAPIStatus, 30000);
 
-        // Fetch data
         FETCH_BTN.addEventListener("click", async () => {
-            OUTPUT.textContent = "Fetching data...";
+            OUTPUT.innerHTML = "Fetching data...";
             try {
                 const response = await fetch(`${API_BASE}/api/data`);
                 if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
@@ -120,11 +194,11 @@
                 const now = new Date();
                 LAST_FETCHED.textContent = `Last fetched: ${now.toLocaleString()}`;
 
-                OUTPUT.textContent = "Select a website to view its data.";
+                OUTPUT.innerHTML = "Select a website to view its data.";
                 populateSiteDropdown(data);
             } catch (err) {
                 console.error(err);
-                OUTPUT.textContent = "Error fetching data: " + err.message;
+                OUTPUT.innerHTML = "Error fetching data: " + err.message;
             }
         });
 
@@ -142,35 +216,32 @@
             SITE_SELECT.disabled = false;
         }
 
-        // Redraw when filter checkbox changes
         HIDE_OUT_OF_STOCK.addEventListener("change", () => {
-            SITE_SELECT.dispatchEvent(new Event("change")); // Trigger re-render
+            SITE_SELECT.dispatchEvent(new Event("change"));
         });
 
         SITE_SELECT.addEventListener("change", () => {
             const selectedSite = SITE_SELECT.value;
             if (!selectedSite || !fullData) {
-                OUTPUT.textContent = "Select a website to view data.";
+                OUTPUT.innerHTML = "Select a website to view data.";
                 return;
             }
 
-            let display = "";
+            let html = "";
 
             if (selectedSite === "__all__") {
                 for (const [siteName, siteData] of Object.entries(fullData)) {
-                    display += "==============================\n";
-                    display += `Website: ${siteName}\n`;
-                    display += "==============================\n\n";
-                    display += formatSiteData(siteData);
-                    display += "\n\n";
+                    html += `Website: ${siteName}\n\n`;
+                    html += formatSiteData(siteData);
+                    html += "\n\n";
                 }
             } else {
                 const siteData = fullData[selectedSite];
-                display += `Showing data for: ${selectedSite}\n\n`;
-                display += formatSiteData(siteData);
+                html += `Showing data for: ${selectedSite}\n\n`;
+                html += formatSiteData(siteData);
             }
 
-            OUTPUT.textContent = display.trim() || "No items in stock based on filter.";
+            OUTPUT.innerHTML = html.trim() || "No items in stock based on filter.";
         });
 
         function formatSiteData(siteData) {
@@ -178,11 +249,14 @@
             let output = "";
 
             for (const [product, locationsOrStatus] of Object.entries(siteData)) {
-                let productDisplay = `${product}\n`;
+                let productDisplay = `<div class="product">`;
+                productDisplay += `<div class="product-title">${product}</div>`;
 
                 if (typeof locationsOrStatus === 'string') {
                     if (!hideOOS || !outOfStockKeywords.includes(locationsOrStatus)) {
-                        productDisplay += `    Status: ${locationsOrStatus}\n\n`;
+                        const stockClass = `stock-${locationsOrStatus.replace(/\s/g, '-')}`;
+                        productDisplay += `<div class="location"><span class="${stockClass}">Status: ${locationsOrStatus}</span></div>`;
+                        productDisplay += `</div>`;
                         output += productDisplay;
                     }
                 } else {
@@ -191,9 +265,10 @@
 
                     if (filteredLocations.length > 0) {
                         for (const [location, stock] of filteredLocations) {
-                            productDisplay += `    ${location}: ${stock}\n`;
+                            const stockClass = `stock-${stock.replace(/\s/g, '-')}`;
+                            productDisplay += `<div class="location">${location}: <span class="${stockClass}">${stock}</span></div>`;
                         }
-                        productDisplay += `\n`;
+                        productDisplay += `</div>`;
                         output += productDisplay;
                     }
                 }
