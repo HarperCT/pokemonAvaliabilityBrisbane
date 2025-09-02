@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>Pokemon Avaliabilty in Brisbane Region</title>
+  <title>Pokemon Availability in Brisbane Region</title>
   <style>
     body {
       font-family: sans-serif;
@@ -31,7 +31,7 @@
   </style>
 </head>
 <body>
-  <h1>Pokemon Avaliabilty in Brisbane Region</h1>
+  <h1>Pokemon Availability in Brisbane Region</h1>
 
   <div id="status">Checking API status...</div>
   <button id="fetchBtn" disabled>Fetch Data</button>
@@ -49,11 +49,9 @@
     const OUTPUT = document.getElementById("output");
     const SITE_SELECT = document.getElementById("siteSelect");
 
-    let fullData = null; // cache full response
+    let fullData = null;
 
-    // -------------------------------
-    // Health Check Loop
-    // -------------------------------
+    // Health Check
     async function checkAPIStatus() {
       try {
         const res = await fetch(`${API_BASE}/`);
@@ -75,9 +73,7 @@
     checkAPIStatus();
     setInterval(checkAPIStatus, 30000);
 
-    // -------------------------------
-    // Fetch Data + Populate Dropdown
-    // -------------------------------
+    // Fetch data
     FETCH_BTN.addEventListener("click", async () => {
       OUTPUT.textContent = "Fetching data...";
       try {
@@ -94,8 +90,14 @@
       }
     });
 
+    // -------------------------------
+    // 🆕 Add "Show All" to dropdown
+    // -------------------------------
     function populateSiteDropdown(data) {
-      SITE_SELECT.innerHTML = `<option value="">-- Select --</option>`;
+      SITE_SELECT.innerHTML = `
+        <option value="">-- Select --</option>
+        <option value="__all__">-- Show All --</option>
+      `;
       Object.keys(data).forEach(site => {
         const option = document.createElement("option");
         option.value = site;
@@ -106,7 +108,7 @@
     }
 
     // -------------------------------
-    // Dropdown Filter Handler
+    // 🆕 Support for "Show All"
     // -------------------------------
     SITE_SELECT.addEventListener("change", () => {
       const selectedSite = SITE_SELECT.value;
@@ -115,31 +117,45 @@
         return;
       }
 
-      const siteData = fullData[selectedSite];
+      let display = "";
 
-      // Render nicely formatted text
-      let display = `Showing data for: ${selectedSite}\n\n`;
+      // Show all sites
+      if (selectedSite === "__all__") {
+        for (const [siteName, siteData] of Object.entries(fullData)) {
+          display += `==============================\n`;
+          display += `🛒 Website: ${siteName}\n`;
+          display += `==============================\n\n`;
 
-      if (typeof siteData === 'object') {
-        for (const [product, locationsOrStatus] of Object.entries(siteData)) {
-          display += `🔹 ${product}\n`;
-
-          if (typeof locationsOrStatus === 'string') {
-            // Simple status string (e.g., "In Stock")
-            display += `    Status: ${locationsOrStatus}\n`;
-          } else {
-            // Object of locations
-            for (const [location, stock] of Object.entries(locationsOrStatus)) {
-              display += `    ${location}: ${stock}\n`;
-            }
-          }
-
-          display += `\n`;
+          display += formatSiteData(siteData);
+          display += `\n\n`;
         }
+      } else {
+        const siteData = fullData[selectedSite];
+        display += `Showing data for: ${selectedSite}\n\n`;
+        display += formatSiteData(siteData);
       }
 
       OUTPUT.textContent = display;
     });
+
+    // -------------------------------
+    // Helper to format one site's data
+    // -------------------------------
+    function formatSiteData(siteData) {
+      let output = "";
+      for (const [product, locationsOrStatus] of Object.entries(siteData)) {
+        output += `🔹 ${product}\n`;
+        if (typeof locationsOrStatus === 'string') {
+          output += `    Status: ${locationsOrStatus}\n`;
+        } else {
+          for (const [location, stock] of Object.entries(locationsOrStatus)) {
+            output += `    ${location}: ${stock}\n`;
+          }
+        }
+        output += `\n`;
+      }
+      return output;
+    }
   </script>
 </body>
 </html>
