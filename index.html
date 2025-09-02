@@ -1,40 +1,309 @@
-<!-- index.html -->
 <!DOCTYPE html>
 <html>
 <head>
-  <meta charset="UTF-8">
-  <title>Python Output Viewer</title>
-  <style>
-    body {
-      font-family: sans-serif;
-      padding: 2rem;
-    }
-    pre {
-      background: #f4f4f4;
-      padding: 1rem;
-      border-radius: 5px;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <title>Pokemon Availability in Brisbane Region</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            padding: 2rem;
+            background-color: #f9f9f9;
+            color: #222;
+        }
+
+        h1 {
+            font-size: 1.8rem;
+            margin-bottom: 1rem;
+        }
+
+        #statusRow {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        #status {
+            font-weight: bold;
+        }
+
+        #status.ok {
+            color: green;
+        }
+
+        #status.error {
+            color: red;
+        }
+
+        button {
+            padding: 0.4rem 1rem;
+            border: none;
+            border-radius: 4px;
+            background-color: #007bff;
+            color: white;
+            cursor: pointer;
+            font-size: 0.95rem;
+        }
+
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        select {
+            padding: 0.4rem;
+            margin-top: 0.5rem;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+        }
+
+        #lastFetched {
+            margin-top: 0.5rem;
+            font-size: 0.9rem;
+            color: #666;
+        }
+
+        label.inline {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.95rem;
+        }
+
+        pre {
+            background: #fff;
+            padding: 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+            white-space: pre-wrap;
+            font-size: 0.95rem;
+            margin-top: 1.5rem;
+        }
+
+        .product {
+            background: #fff;
+            padding: 1rem;
+            border-radius: 8px;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .product-title {
+            font-weight: bold;
+            font-size: 1rem;
+            color: #333;
+        }
+
+        .location {
+            font-size: 0.9rem;
+            color: #444;
+        }
+
+        .stock-high {
+            color: green;
+            font-weight: bold;
+        }
+        .stock-medium {
+            color: orange;
+        }
+        .stock-low {
+            color: red;
+        }
+        .stock-unknown {
+            color: gray;
+        }
+
+        .section-title {
+            font-weight: bold;
+            font-size: 1.1rem;
+            margin-top: 2rem;
+            margin-bottom: 0.5rem;
+            border-bottom: 2px solid #ddd;
+            padding-bottom: 0.3rem;
+        }
+        #output {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1rem;
+            background: none;
+            padding: 0;
+            border-radius: 0;
+            box-shadow: none;
+            white-space: normal;
+            margin-top: 1.5rem;
+        }
+    </style>
 </head>
 <body>
-    <h1>Python Output (from API)</h1>
-    <button id="fetchBtn">Fetch Data</button>
-    <pre id="output">Click the button to load data...</pre>
+    <h1>Pokemon Availability in Brisbane Region</h1>
+
+    <div id="statusRow">
+        <div id="status">Checking API status...</div>
+        <button id="fetchBtn" disabled>Fetch Data</button>
+        <label class="inline">
+            <input type="checkbox" id="hideOutOfStock" />
+            Hide out of stock items
+        </label>
+    </div>
+
+    <div id="lastFetched">Last fetched: Never</div>
+
+    <label for="siteSelect">Filter by website:</label>
+    <select id="siteSelect" disabled>
+        <option value="">-- Select --</option>
+    </select>
+
+    <div id="output">Click "Fetch Data" to load info...</div>
+
     <script>
-    document.getElementById("fetchBtn").addEventListener("click", async () => {
-        const output = document.getElementById("output");
-        try {
-            const response = await fetch('https://pokemonavaliabilitybrisbane.onrender.com/api/data');
+        const API_BASE = 'https://pokemonavaliabilitybrisbane.onrender.com';
+        const STATUS_EL = document.getElementById("status");
+        const FETCH_BTN = document.getElementById("fetchBtn");
+        const OUTPUT = document.getElementById("output");
+        const SITE_SELECT = document.getElementById("siteSelect");
+        const LAST_FETCHED = document.getElementById("lastFetched");
+        const HIDE_OUT_OF_STOCK = document.getElementById("hideOutOfStock");
 
-            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+        let fullData = null;
+        const stockKeywordMap = {
+            high: ["High", "In Stock"],
+            medium: ["Medium"],
+            low: ["Low", "Out of Stock"]
+        };
+        const outOfStockKeywords = stockKeywordMap.low.map(x => x.toLowerCase());
+        async function checkAPIStatus() {
+            try {
+                const res = await fetch(`${API_BASE}/`);
+                if (!res.ok) throw new Error("API offline");
+                await res.json();
 
-            const data = await response.json();
-            output.textContent = JSON.stringify(data, null, 2);
-        } catch (err) {
-            console.error(err);
-            output.textContent = "Error fetching data: " + err.message;
+                STATUS_EL.textContent = "API is online.";
+                STATUS_EL.className = "ok";
+                FETCH_BTN.disabled = false;
+            } catch (err) {
+                console.warn("API is offline:", err);
+                STATUS_EL.textContent = "API is offline. Retrying in 30 seconds...";
+                STATUS_EL.className = "error";
+                FETCH_BTN.disabled = true;
+                SITE_SELECT.disabled = true;
+            }
         }
-    });
+
+        checkAPIStatus();
+        setInterval(checkAPIStatus, 30000);
+
+        FETCH_BTN.addEventListener("click", async () => {
+            OUTPUT.innerHTML = "Fetching data...";
+            try {
+                const response = await fetch(`${API_BASE}/api/data`);
+                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                const data = await response.json();
+                fullData = data;
+
+                const now = new Date();
+                LAST_FETCHED.textContent = `Last fetched: ${now.toLocaleString()}`;
+
+                OUTPUT.innerHTML = "Select a website to view its data.";
+                populateSiteDropdown(data);
+            } catch (err) {
+                console.error(err);
+                OUTPUT.innerHTML = "Error fetching data: " + err.message;
+            }
+        });
+
+        function populateSiteDropdown(data) {
+            SITE_SELECT.innerHTML = `
+                <option value="">-- Select --</option>
+                <option value="__all__">-- Show All --</option>
+            `;
+            Object.keys(data).forEach(site => {
+                const option = document.createElement("option");
+                option.value = site;
+                option.textContent = site;
+                SITE_SELECT.appendChild(option);
+            });
+            SITE_SELECT.disabled = false;
+        }
+
+        HIDE_OUT_OF_STOCK.addEventListener("change", () => {
+            SITE_SELECT.dispatchEvent(new Event("change"));
+        });
+
+        SITE_SELECT.addEventListener("change", () => {
+            const selectedSite = SITE_SELECT.value;
+            if (!selectedSite || !fullData) {
+                OUTPUT.innerHTML = "Select a website to view data.";
+                return;
+            }
+
+            let html = "";
+
+            if (selectedSite === "__all__") {
+                for (const [siteName, siteData] of Object.entries(fullData)) {
+                    html += `Website: ${siteName}\n\n`;
+                    html += formatSiteData(siteData);
+                    html += "\n\n";
+                }
+            } else {
+                const siteData = fullData[selectedSite];
+                html += `Showing data for: ${selectedSite}\n\n`;
+                html += formatSiteData(siteData);
+            }
+
+            OUTPUT.innerHTML = html.trim() || "No items in stock based on filter.";
+        });
+
+        function formatSiteData(siteData) {
+            const hideOOS = HIDE_OUT_OF_STOCK.checked;
+            let output = "";
+
+            for (const [product, locationsOrStatus] of Object.entries(siteData)) {
+                let productDisplay = `<div class="product">`;
+                productDisplay += `<div class="product-title">${product}</div>`;
+
+                if (typeof locationsOrStatus === 'string') {
+                    const stock = locationsOrStatus;
+                    const stockClass = getStockClass(stock);
+
+                    if (!hideOOS || !outOfStockKeywords.includes(stock.toLowerCase())) {
+                        productDisplay += `    <span class="${stockClass}">Status: ${stock}</span>\n</div>\n\n`;
+                        output += productDisplay;
+                    }
+                } else {
+                    // It's an object of locations
+                    const filteredLocations = Object.entries(locationsOrStatus).filter(([_, stock]) =>
+                        !hideOOS || !outOfStockKeywords.includes(stock.toLowerCase())
+                    );
+
+                    if (filteredLocations.length > 0) {
+                        for (const [location, stock] of filteredLocations) {
+                            const stockClass = getStockClass(stock);
+                            productDisplay += `    <span class="${stockClass}">${location}: ${stock}</span>\n`;
+                        }
+                        productDisplay += `</div>\n\n`;
+                        output += productDisplay;
+                    }
+                }
+            }
+
+            return output;
+        }
+
+
+        function getStockClass(stockValue) {
+            const normalized = stockValue.toLowerCase();
+
+            for (const [classSuffix, keywords] of Object.entries(stockKeywordMap)) {
+                if (keywords.some(k => normalized.includes(k.toLowerCase()))) {
+                    return `stock-${classSuffix}`;
+                }
+            }
+
+            return "stock-unknown";
+        }
     </script>
 </body>
 </html>
