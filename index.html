@@ -152,6 +152,8 @@
     <div id="lastFetched">Last fetched: Never</div>
 
     <label for="siteSelect">Filter by website:</label>
+    <input type="text" id="product-filter" placeholder="Filter products..." />
+    
     <select id="siteSelect" disabled>
         <option value="">-- Select --</option>
     </select>
@@ -173,7 +175,9 @@
             medium: ["Medium"],
             low: ["Low", "Out of Stock"]
         };
+        
         const outOfStockKeywords = stockKeywordMap.low.map(x => x.toLowerCase());
+        const filterInput = document.getElementById("product-filter");
         async function checkAPIStatus() {
             try {
                 const res = await fetch(`${API_BASE}/`);
@@ -233,7 +237,17 @@
         });
 
         SITE_SELECT.addEventListener("change", () => {
+            renderSelectedSite();
+        });
+
+        filterInput.addEventListener("input", () => {
+            renderSelectedSite();
+        });
+
+        function renderSelectedSite() {
             const selectedSite = SITE_SELECT.value;
+            const filterText = filterInput.value;
+
             if (!selectedSite || !fullData) {
                 OUTPUT.innerHTML = "Select a website to view data.";
                 return;
@@ -243,24 +257,27 @@
 
             if (selectedSite === "__all__") {
                 for (const [siteName, siteData] of Object.entries(fullData)) {
-                    html += `Website: ${siteName}\n\n`;
-                    html += formatSiteData(siteData);
-                    html += "\n\n";
+                    html += `<div class="section-title">${siteName}</div>`;
+                    html += formatSiteData(siteData, filterText);
                 }
             } else {
                 const siteData = fullData[selectedSite];
-                html += `Showing data for: ${selectedSite}\n\n`;
-                html += formatSiteData(siteData);
+                html += formatSiteData(siteData, filterText);
             }
 
             OUTPUT.innerHTML = html.trim() || "No items in stock based on filter.";
-        });
+        }
 
-        function formatSiteData(siteData) {
+        function formatSiteData(siteData, filterText = "") {
             const hideOOS = HIDE_OUT_OF_STOCK.checked;
+            const filter = filterText.trim().toLowerCase();
             let output = "";
 
             for (const [product, locationsOrStatus] of Object.entries(siteData)) {
+                if (filter && !product.toLowerCase().includes(filter)) {
+                    continue; // Skip if product name doesn't match filter
+                }
+
                 let productDisplay = `<div class="product">`;
                 productDisplay += `<div class="product-title">${product}</div>`;
 
@@ -269,11 +286,10 @@
                     const stockClass = getStockClass(stock);
 
                     if (!hideOOS || !outOfStockKeywords.includes(stock.toLowerCase())) {
-                        productDisplay += `    <span class="${stockClass}">Status: ${stock}</span>\n</div>\n\n`;
+                        productDisplay += `<span class="${stockClass}">Status: ${stock}</span>\n</div>\n\n`;
                         output += productDisplay;
                     }
                 } else {
-                    // It's an object of locations
                     const filteredLocations = Object.entries(locationsOrStatus).filter(([_, stock]) =>
                         !hideOOS || !outOfStockKeywords.includes(stock.toLowerCase())
                     );
@@ -281,7 +297,7 @@
                     if (filteredLocations.length > 0) {
                         for (const [location, stock] of filteredLocations) {
                             const stockClass = getStockClass(stock);
-                            productDisplay += `    <span class="${stockClass}">${location}: ${stock}</span>\n`;
+                            productDisplay += `<span class="${stockClass}">${location}: ${stock}</span>\n`;
                         }
                         productDisplay += `</div>\n\n`;
                         output += productDisplay;
@@ -291,6 +307,7 @@
 
             return output;
         }
+
 
 
         function getStockClass(stockValue) {
