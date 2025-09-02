@@ -7,8 +7,11 @@ import main
 class DataAPI:
     def __init__(self):
         self.app = Flask(__name__)
-        CORS(self.app, resources={r"/api/*": {"origins": "https://harperct.github.io"}})
-        
+        CORS(self.app, resources={
+            r"/": {"origins": "https://harperct.github.io"},
+            r"/api/*": {"origins": "https://harperct.github.io"}
+        })
+
         self.cached_data = None
         self.setup_routes()
 
