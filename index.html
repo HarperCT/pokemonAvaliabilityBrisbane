@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>Python Output Viewer</title>
+  <title>Pokemon Avaliabilty in Brisbane Region</title>
   <style>
     body {
       font-family: sans-serif;
@@ -12,42 +12,54 @@
       background: #f4f4f4;
       padding: 1rem;
       border-radius: 5px;
+      white-space: pre-wrap;
     }
     #status {
       margin-bottom: 1rem;
       font-weight: bold;
     }
-    #status.ok {
-      color: green;
-    }
-    #status.error {
-      color: red;
-    }
+    #status.ok { color: green; }
+    #status.error { color: red; }
     button:disabled {
       background: #ccc;
       cursor: not-allowed;
+    }
+    select {
+      margin-left: 1rem;
+      padding: 0.4rem;
     }
   </style>
 </head>
 <body>
   <h1>Pokemon Avaliabilty in Brisbane Region</h1>
+
   <div id="status">Checking API status...</div>
   <button id="fetchBtn" disabled>Fetch Data</button>
-  <pre id="output">Click the button to load data...</pre>
+  <label for="siteSelect">Filter by website:</label>
+  <select id="siteSelect" disabled>
+    <option value="">-- Select --</option>
+  </select>
+
+  <pre id="output">Click "Fetch Data" to load info...</pre>
 
   <script>
     const API_BASE = 'https://pokemonavaliabilitybrisbane.onrender.com';
     const STATUS_EL = document.getElementById("status");
     const FETCH_BTN = document.getElementById("fetchBtn");
     const OUTPUT = document.getElementById("output");
+    const SITE_SELECT = document.getElementById("siteSelect");
 
+    let fullData = null; // cache full response
+
+    // -------------------------------
+    // Health Check Loop
+    // -------------------------------
     async function checkAPIStatus() {
       try {
         const res = await fetch(`${API_BASE}/`);
         if (!res.ok) throw new Error("API offline");
-        
         const data = await res.json();
-        console.log("API is online:", data);
+
         STATUS_EL.textContent = "API is online.";
         STATUS_EL.className = "ok";
         FETCH_BTN.disabled = false;
@@ -56,24 +68,77 @@
         STATUS_EL.textContent = "API is offline. Retrying in 30 seconds...";
         STATUS_EL.className = "error";
         FETCH_BTN.disabled = true;
+        SITE_SELECT.disabled = true;
       }
     }
 
-    // Run immediately and every 30 seconds
     checkAPIStatus();
     setInterval(checkAPIStatus, 30000);
 
-    // Fetch Data Button
+    // -------------------------------
+    // Fetch Data + Populate Dropdown
+    // -------------------------------
     FETCH_BTN.addEventListener("click", async () => {
+      OUTPUT.textContent = "Fetching data...";
       try {
         const response = await fetch(`${API_BASE}/api/data`);
         if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
         const data = await response.json();
-        OUTPUT.textContent = JSON.stringify(data, null, 2);
+        fullData = data;
+
+        OUTPUT.textContent = "Select a website to view its data.";
+        populateSiteDropdown(data);
       } catch (err) {
         console.error(err);
         OUTPUT.textContent = "Error fetching data: " + err.message;
       }
+    });
+
+    function populateSiteDropdown(data) {
+      SITE_SELECT.innerHTML = `<option value="">-- Select --</option>`;
+      Object.keys(data).forEach(site => {
+        const option = document.createElement("option");
+        option.value = site;
+        option.textContent = site;
+        SITE_SELECT.appendChild(option);
+      });
+      SITE_SELECT.disabled = false;
+    }
+
+    // -------------------------------
+    // Dropdown Filter Handler
+    // -------------------------------
+    SITE_SELECT.addEventListener("change", () => {
+      const selectedSite = SITE_SELECT.value;
+      if (!selectedSite || !fullData) {
+        OUTPUT.textContent = "Select a website to view data.";
+        return;
+      }
+
+      const siteData = fullData[selectedSite];
+
+      // Render nicely formatted text
+      let display = `Showing data for: ${selectedSite}\n\n`;
+
+      if (typeof siteData === 'object') {
+        for (const [product, locationsOrStatus] of Object.entries(siteData)) {
+          display += `🔹 ${product}\n`;
+
+          if (typeof locationsOrStatus === 'string') {
+            // Simple status string (e.g., "In Stock")
+            display += `    Status: ${locationsOrStatus}\n`;
+          } else {
+            // Object of locations
+            for (const [location, stock] of Object.entries(locationsOrStatus)) {
+              display += `    ${location}: ${stock}\n`;
+            }
+          }
+
+          display += `\n`;
+        }
+      }
+
+      OUTPUT.textContent = display;
     });
   </script>
 </body>
