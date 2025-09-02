@@ -1,22 +1,22 @@
-from bs4 import BeautifulSoup
-import requests
+import cloudscraper
 from colorama import Fore, Style
+from bs4 import BeautifulSoup
+import logging
+logger = logging.getLogger(__name__)
 
 url = "https://morethanmeeples.com.au/buy-pokemon-cards-online/"
 
 headers = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:142.0) Gecko/20100101 Firefox/142.0",
     "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-    "Accept-Encoding": "gzip, deflate, br",
     "Accept-Language": "en-US,en;q=0.5",
     "Referer": "https://morethanmeeples.com.au/",
-    "Connection": "keep-alive",
 }
 def main():
-    response = requests.get(url, headers=headers)
-
+    logger.info("Starting Meeples API")
+    scraper = cloudscraper.create_scraper()  # Bypasses Cloudflare JS challenge
+    response = scraper.get(url, headers=headers)
     html = response.text
-
     # Parse with BeautifulSoup
     soup = BeautifulSoup(html, "html.parser")
 
@@ -41,6 +41,7 @@ def main():
         product_availability[slug] = stock_status
 
     # Output as pretty JSON
+    logger.info("Finished Meeples API")
     return product_availability
 
 def print_colored_stock(stock_data):

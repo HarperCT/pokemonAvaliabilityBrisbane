@@ -1,8 +1,10 @@
 import urllib3
 import json
+import logging
 
 stock_api = "https://api.bigw.com.au/api/availability/v0/product/"
 base_bigw_url = "https://www.bigw.com.au/"  # For cookies
+logger = logging.getLogger(__name__)
 
 PRODUCTS = {
     "Pokemon TCG: Charizard ex Super-Premium Collection": 942021,
@@ -41,19 +43,21 @@ STORE_IDS = {
 }
 
 def main():
+    logger.info("Starting BigW API")
     nice_json = {}
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/115.0',
         'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
         'Accept-Language': 'en-US,en;q=0.5',
-        'Accept-Encoding': 'gzip, deflate, br',
-        'Connection': 'keep-alive',
-        'Upgrade-Insecure-Requests': '1',
         'X-BIGW-ZoneId': 'BRISBANE-CITY-4000'
     }
 
     http = urllib3.PoolManager(headers=headers)
-    response = http.request('GET', base_bigw_url)
+    try:
+        response = http.request('GET', base_bigw_url, timeout=20.0)
+    except Exception:
+        logger.error("Big W sucks, move on to next API")
+        return {}
     set_cookie_header = response.headers.get('Set-Cookie')
     headers["set-cookie"] = set_cookie_header
     all_stores_url = "?"
@@ -65,12 +69,19 @@ def main():
 
     for key, value in PRODUCTS.items():
         final_stock_api = stock_api + str(value) + all_stores_url
+        logger.info("hitting the product")
+        try:
+            stock_response = http.request(
+                'GET',
+                final_stock_api,
+                headers=headers,
+                timeout=20.0
+            )
+        except Exception:
+            logger.error("probably failed just this one... lets skip it...")
+            continue
+
         nice_json[key] = {}
-        stock_response = http.request(
-            'GET',
-            final_stock_api,
-            headers=headers
-        )
 
         response_json = json.loads(stock_response.data.decode())
 
@@ -85,6 +96,7 @@ def main():
                 nice_json[key][key2] = value2
             else:
                 nice_json[key][key2] = value2["status"]
+    logger.info("Finished BigW API")
 
     return nice_json
 

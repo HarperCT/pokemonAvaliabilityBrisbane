@@ -2,11 +2,6 @@ import logging
 import requests
 import json
 
-# Configure logging
-logging.basicConfig(
-    level=logging.INFO,  # or logging.DEBUG if you want more verbose output
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
 logger = logging.getLogger(__name__)
 
 # Keycodes with associated product names
@@ -38,12 +33,6 @@ HEADERS = {
     "accept-language": "en-AU,en-US;q=0.9,en-GB;q=0.8,en;q=0.7",
     "content-type": "application/json",
     "priority": "u=1, i",
-    "sec-ch-ua": "\"Not A(Brand\";v=\"8\", \"Chromium\";v=\"132\", \"Google Chrome\";v=\"132\"",
-    "sec-ch-ua-mobile": "?0",
-    "sec-ch-ua-platform": "\"Windows\"",
-    "sec-fetch-dest": "empty",
-    "sec-fetch-mode": "cors",
-    "sec-fetch-site": "same-site",
     "Referer": "https://www.kmart.com.au/",
     "Referrer-Policy": "strict-origin-when-cross-origin"
 }
@@ -80,13 +69,14 @@ def fetch_inventory_for_keycode(keycode: str, postcode: str) -> list:
     logger.debug("Fetching inventory for keycode %s with payload:\n%s",
                  keycode, json.dumps(payload, indent=2))
 
-    response = requests.post(URL, headers=HEADERS, json=payload)
+    response = requests.post(URL, headers=HEADERS, json=payload, timeout=20.0)
     response.raise_for_status()
     data = response.json()
 
     # Navigate into the structure
-    find_in_store = data.get("data", {}).get("findInStoreQuery", [])
-    if not find_in_store:
+    try:
+        find_in_store = data.get("data", {}).get("findInStoreQuery", [])
+    except Exception:
         logger.warning("No data returned for keycode %s", keycode)
         return []
 
@@ -103,7 +93,7 @@ def fetch_inventory_for_keycode(keycode: str, postcode: str) -> list:
     return results
 
 def main(postcode: str):
-
+    logger.info("Starting Kmart API")
     all_results = {}
     nice_json = {}
     for product_name, keycode in KEYCODE_PRODUCTS.items():
@@ -112,6 +102,7 @@ def main(postcode: str):
         nice_json[product_name] = {}
         for (loc_name, _loc_id, stock_level) in all_results[product_name]:
             nice_json[product_name][loc_name] = stock_level
+    logger.info("Finished Kmart API")
     return nice_json
 
 if __name__ == "__main__":
