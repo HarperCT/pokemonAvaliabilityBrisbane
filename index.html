@@ -102,17 +102,18 @@
             color: #444;
         }
 
-        .stock-High {
+        .stock-high {
             color: green;
+            font-weight: bold;
         }
-
-        .stock-Medium {
+        .stock-medium {
             color: orange;
         }
-
-        .stock-Low,
-        .stock-Out\ of\ Stock {
+        .stock-low {
             color: red;
+        }
+        .stock-unknown {
+            color: gray;
         }
 
         .section-title {
@@ -167,8 +168,12 @@
         const HIDE_OUT_OF_STOCK = document.getElementById("hideOutOfStock");
 
         let fullData = null;
-        const outOfStockKeywords = ["Low", "Out of Stock"];
-
+        const stockKeywordMap = {
+            high: ["High", "In Stock"],
+            medium: ["Medium"],
+            low: ["Low", "Out of Stock"]
+        };
+        const outOfStockKeywords = stockKeywordMap.low.map(x => x.toLowerCase());
         async function checkAPIStatus() {
             try {
                 const res = await fetch(`${API_BASE}/`);
@@ -260,28 +265,44 @@
                 productDisplay += `<div class="product-title">${product}</div>`;
 
                 if (typeof locationsOrStatus === 'string') {
-                    if (!hideOOS || !outOfStockKeywords.includes(locationsOrStatus)) {
-                        const stockClass = `stock-${locationsOrStatus.replace(/\s/g, '-')}`;
-                        productDisplay += `<div class="location"><span class="${stockClass}">Status: ${locationsOrStatus}</span></div>`;
-                        productDisplay += `</div>`;
+                    const stock = locationsOrStatus;
+                    const stockClass = getStockClass(stock);
+
+                    if (!hideOOS || !outOfStockKeywords.includes(stock.toLowerCase())) {
+                        productDisplay += `    <span class="${stockClass}">Status: ${stock}</span>\n</div>\n\n`;
                         output += productDisplay;
                     }
                 } else {
-                    const filteredLocations = Object.entries(locationsOrStatus)
-                        .filter(([_, stock]) => !hideOOS || !outOfStockKeywords.includes(stock));
+                    // It's an object of locations
+                    const filteredLocations = Object.entries(locationsOrStatus).filter(([_, stock]) =>
+                        !hideOOS || !outOfStockKeywords.includes(stock.toLowerCase())
+                    );
 
                     if (filteredLocations.length > 0) {
                         for (const [location, stock] of filteredLocations) {
-                            const stockClass = `stock-${stock.replace(/\s/g, '-')}`;
-                            productDisplay += `<div class="location">${location}: <span class="${stockClass}">${stock}</span></div>`;
+                            const stockClass = getStockClass(stock);
+                            productDisplay += `    <span class="${stockClass}">${location}: ${stock}</span>\n`;
                         }
-                        productDisplay += `</div>`;
+                        productDisplay += `</div>\n\n`;
                         output += productDisplay;
                     }
                 }
             }
 
             return output;
+        }
+
+
+        function getStockClass(stockValue) {
+            const normalized = stockValue.toLowerCase();
+
+            for (const [classSuffix, keywords] of Object.entries(stockKeywordMap)) {
+                if (keywords.some(k => normalized.includes(k.toLowerCase()))) {
+                    return `stock-${classSuffix}`;
+                }
+            }
+
+            return "stock-unknown";
         }
     </script>
 </body>

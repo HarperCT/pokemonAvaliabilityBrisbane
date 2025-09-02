@@ -29,3 +29,9 @@ This repository provides a tool to check the availability of various Pokémon ca
 ## Note on some APIs
 
 Kmart seem ridiculously wrong most of the time...
+
+
+## Checkout the github pages!
+https://harperct.github.io/pokemonAvaliabilityBrisbane/
+
+Note: The API is hosted on a free service, it goes down without activity. On the first load in a while it approximately a minute to kick back up
