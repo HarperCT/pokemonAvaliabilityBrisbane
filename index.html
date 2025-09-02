@@ -14,8 +14,13 @@
       border-radius: 5px;
       white-space: pre-wrap;
     }
-    #status {
+    #statusRow {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
       margin-bottom: 1rem;
+    }
+    #status {
       font-weight: bold;
     }
     #status.ok { color: green; }
@@ -28,13 +33,23 @@
       margin-left: 1rem;
       padding: 0.4rem;
     }
+    #lastFetched {
+      margin-top: 0.5rem;
+      font-size: 0.9rem;
+      color: #555;
+    }
   </style>
 </head>
 <body>
   <h1>Pokemon Availability in Brisbane Region</h1>
 
-  <div id="status">Checking API status...</div>
-  <button id="fetchBtn" disabled>Fetch Data</button>
+  <div id="statusRow">
+    <div id="status">Checking API status...</div>
+    <button id="fetchBtn" disabled>Fetch Data</button>
+  </div>
+
+  <div id="lastFetched">Last fetched: Never</div>
+
   <label for="siteSelect">Filter by website:</label>
   <select id="siteSelect" disabled>
     <option value="">-- Select --</option>
@@ -48,6 +63,7 @@
     const FETCH_BTN = document.getElementById("fetchBtn");
     const OUTPUT = document.getElementById("output");
     const SITE_SELECT = document.getElementById("siteSelect");
+    const LAST_FETCHED = document.getElementById("lastFetched");
 
     let fullData = null;
 
@@ -56,7 +72,7 @@
       try {
         const res = await fetch(`${API_BASE}/`);
         if (!res.ok) throw new Error("API offline");
-        const data = await res.json();
+        await res.json();
 
         STATUS_EL.textContent = "API is online.";
         STATUS_EL.className = "ok";
@@ -82,6 +98,9 @@
         const data = await response.json();
         fullData = data;
 
+        const now = new Date();
+        LAST_FETCHED.textContent = `Last fetched: ${now.toLocaleString()}`;
+
         OUTPUT.textContent = "Select a website to view its data.";
         populateSiteDropdown(data);
       } catch (err) {
@@ -90,9 +109,6 @@
       }
     });
 
-    // -------------------------------
-    // 🆕 Add "Show All" to dropdown
-    // -------------------------------
     function populateSiteDropdown(data) {
       SITE_SELECT.innerHTML = `
         <option value="">-- Select --</option>
@@ -107,9 +123,6 @@
       SITE_SELECT.disabled = false;
     }
 
-    // -------------------------------
-    // 🆕 Support for "Show All"
-    // -------------------------------
     SITE_SELECT.addEventListener("change", () => {
       const selectedSite = SITE_SELECT.value;
       if (!selectedSite || !fullData) {
@@ -119,15 +132,13 @@
 
       let display = "";
 
-      // Show all sites
       if (selectedSite === "__all__") {
         for (const [siteName, siteData] of Object.entries(fullData)) {
-          display += `==============================\n`;
-          display += `🛒 Website: ${siteName}\n`;
-          display += `==============================\n\n`;
-
+          display += "==============================\n";
+          display += `Website: ${siteName}\n`;
+          display += "==============================\n\n";
           display += formatSiteData(siteData);
-          display += `\n\n`;
+          display += "\n\n";
         }
       } else {
         const siteData = fullData[selectedSite];
@@ -138,13 +149,10 @@
       OUTPUT.textContent = display;
     });
 
-    // -------------------------------
-    // Helper to format one site's data
-    // -------------------------------
     function formatSiteData(siteData) {
       let output = "";
       for (const [product, locationsOrStatus] of Object.entries(siteData)) {
-        output += `🔹 ${product}\n`;
+        output += `${product}\n`;
         if (typeof locationsOrStatus === 'string') {
           output += `    Status: ${locationsOrStatus}\n`;
         } else {
@@ -152,7 +160,7 @@
             output += `    ${location}: ${stock}\n`;
           }
         }
-        output += `\n`;
+        output += "\n";
       }
       return output;
     }
