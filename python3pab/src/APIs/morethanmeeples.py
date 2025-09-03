@@ -4,7 +4,8 @@ from bs4 import BeautifulSoup
 import logging
 logger = logging.getLogger(__name__)
 
-url = "https://morethanmeeples.com.au/buy-pokemon-cards-online/"
+urls = ["https://morethanmeeples.com.au/buy-pokemon-cards-online/", "https://morethanmeeples.com.au/buy-pokemon-cards-online/?sf_paged=2", 
+        "https://morethanmeeples.com.au/buy-pokemon-cards-online/?sf_paged=3", "https://morethanmeeples.com.au/buy-pokemon-cards-online/?sf_paged=4"]
 
 headers = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:142.0) Gecko/20100101 Firefox/142.0",
@@ -15,32 +16,32 @@ headers = {
 def main():
     logger.info("Starting Meeples API")
     scraper = cloudscraper.create_scraper()  # Bypasses Cloudflare JS challenge
-    response = scraper.get(url, headers=headers)
-    html = response.text
-    # Parse with BeautifulSoup
-    soup = BeautifulSoup(html, "html.parser")
-
     # Build product availability dict
     product_availability = {}
+    for url in urls:
+        response = scraper.get(url, headers=headers)
+        html = response.text
+        # Parse with BeautifulSoup
+        soup = BeautifulSoup(html, "html.parser")
 
-    products = soup.find_all("a", class_="woocommerce-LoopProduct-link woocommerce-loop-product__link")
 
-    for product in products:
-        href = product.get("href", "")
-        
-        # Extract product slug from URL
-        if "/product/" in href:
-            slug = href.split("/product/")[-1].strip("/")
-        else:
-            continue  # skip anything unexpected
+        products = soup.find_all("a", class_="woocommerce-LoopProduct-link woocommerce-loop-product__link")
 
-        # Determine stock status
-        out_of_stock = product.find("span", class_="outofstock_label")
-        stock_status = "Out of Stock" if out_of_stock else "In Stock"
+        for product in products:
+            href = product.get("href", "")
+            
+            # Extract product slug from URL
+            if "/product/" in href:
+                slug = href.split("/product/")[-1].strip("/")
+            else:
+                continue  # skip anything unexpected
 
-        product_availability[slug] = stock_status
+            # Determine stock status
+            out_of_stock = product.find("span", class_="outofstock_label")
+            stock_status = "Out of Stock" if out_of_stock else "In Stock"
 
-    # Output as pretty JSON
+            product_availability[slug] = stock_status
+
     logger.info("Finished Meeples API")
     return product_availability
 
